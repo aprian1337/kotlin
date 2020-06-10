@@ -93,6 +93,7 @@ expect class MatchGroup {
     val value: String
 }
 
+@CompileTimeCalculation
 expect enum class RegexOption {
     IGNORE_CASE,
     MULTILINE
