@@ -59,6 +59,24 @@ internal class PersistentIrValueParameter(
     override var removedOn: Int = Int.MAX_VALUE
     override var annotationsField: List<IrConstructorCall> = emptyList()
 
+    override var origin: IrDeclarationOrigin
+        get() = super.origin
+        set(value) {
+            super.origin = value
+        }
+
+    override var parent: IrDeclarationParent
+        get() = super.parent
+        set(value) {
+            super.parent = value
+        }
+
+    override var annotations: List<IrConstructorCall>
+        get() = super.annotations
+        set(value) {
+            super.annotations = value
+        }
+
     override var defaultValueField: IrExpressionBody? = null
 
     override var defaultValue: IrExpressionBody?

@@ -7,7 +7,10 @@
 package org.jetbrains.kotlin.ir.declarations.persistent
 
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
+import org.jetbrains.kotlin.ir.declarations.IrSymbolOwner
 import org.jetbrains.kotlin.ir.declarations.persistent.carriers.BodyCarrier
 import org.jetbrains.kotlin.ir.declarations.persistent.carriers.Carrier
 import org.jetbrains.kotlin.ir.declarations.persistent.carriers.DeclarationCarrier
@@ -17,7 +20,7 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
-interface PersistentIrDeclarationBase<T : DeclarationCarrier> : PersistentIrElementBase<T>, IrDeclaration, DeclarationCarrier {
+interface PersistentIrDeclarationBase<T : DeclarationCarrier> : PersistentIrElementBase<T>, DeclarationCarrier {
     var removedOn: Int
 
 
@@ -36,7 +39,7 @@ interface PersistentIrDeclarationBase<T : DeclarationCarrier> : PersistentIrElem
     var signature: IdSignature?
 
     // TODO reduce boilerplate
-    override var parent: IrDeclarationParent
+    var parent: IrDeclarationParent
         get() = getCarrier().parentField ?: throw UninitializedPropertyAccessException("Parent not initialized: $this")
         set(p) {
             if (getCarrier().parentField !== p) {
@@ -45,7 +48,7 @@ interface PersistentIrDeclarationBase<T : DeclarationCarrier> : PersistentIrElem
             }
         }
 
-    override var origin: IrDeclarationOrigin
+    var origin: IrDeclarationOrigin
         get() = getCarrier().originField
         set(p) {
             if (getCarrier().originField !== p) {
@@ -54,7 +57,7 @@ interface PersistentIrDeclarationBase<T : DeclarationCarrier> : PersistentIrElem
             }
         }
 
-    override var annotations: List<IrConstructorCall>
+    var annotations: List<IrConstructorCall>
         get() = getCarrier().annotationsField
         set(v) {
             if (getCarrier().annotationsField !== v) {
@@ -65,7 +68,7 @@ interface PersistentIrDeclarationBase<T : DeclarationCarrier> : PersistentIrElem
 
     override fun ensureLowered() {
         if (factory.stageController.currentStage > loweredUpTo) {
-            factory.stageController.lazyLower(this)
+            factory.stageController.lazyLower(this as IrDeclaration)
         }
     }
 }
