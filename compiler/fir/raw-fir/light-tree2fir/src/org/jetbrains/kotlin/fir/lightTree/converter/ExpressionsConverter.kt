@@ -459,7 +459,7 @@ class ExpressionsConverter(
         var isReceiver = true
         var hasQuestionMarkAtLHS = false
         var firReceiverExpression: FirExpression? = null
-        lateinit var firCallableReference: FirQualifiedAccess
+        lateinit var namedReference: FirNamedReference
         callableReferenceExpression.forEachChildren {
             when (it.tokenType) {
                 COLONCOLON -> isReceiver = false
@@ -468,7 +468,7 @@ class ExpressionsConverter(
                     if (isReceiver) {
                         firReceiverExpression = getAsFirExpression(it, "Incorrect receiver expression")
                     } else {
-                        firCallableReference = convertSimpleNameExpression(it)
+                        namedReference = createSimpleNamedReference(it.toFirSourceElement(), it)
                     }
                 }
             }
@@ -476,7 +476,7 @@ class ExpressionsConverter(
 
         return buildCallableReferenceAccess {
             source = callableReferenceExpression.toFirSourceElement()
-            calleeReference = firCallableReference.calleeReference as FirNamedReference
+            calleeReference = namedReference
             explicitReceiver = firReceiverExpression
             this.hasQuestionMarkAtLHS = hasQuestionMarkAtLHS
         }
@@ -956,12 +956,25 @@ class ExpressionsConverter(
      * @see org.jetbrains.kotlin.fir.builder.RawFirBuilder.Visitor.visitSimpleNameExpression
      */
     private fun convertSimpleNameExpression(referenceExpression: LighterASTNode): FirQualifiedAccessExpression {
+        val sourceElement = referenceExpression.toFirSourceElement()
+        val referenceSourceElement = if (sourceElement.kind is FirFakeSourceElementKind) {
+            sourceElement
+        } else {
+            sourceElement.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
+        }
         return buildQualifiedAccessExpression {
-            source = referenceExpression.toFirSourceElement()
-            calleeReference = buildSimpleNamedReference {
-                source = this@buildQualifiedAccessExpression.source
-                name = referenceExpression.asText.nameAsSafeName()
-            }
+            source = sourceElement
+            calleeReference = createSimpleNamedReference(referenceSourceElement, referenceExpression)
+        }
+    }
+
+    private fun createSimpleNamedReference(
+        sourceElement: FirSourceElement,
+        referenceExpression: LighterASTNode
+    ): FirNamedReference {
+        return buildSimpleNamedReference {
+            source = sourceElement
+            name = referenceExpression.asText.nameAsSafeName()
         }
     }
 

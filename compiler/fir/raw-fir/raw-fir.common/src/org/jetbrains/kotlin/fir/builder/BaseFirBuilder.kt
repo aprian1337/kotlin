@@ -1179,7 +1179,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
 
     private fun FirVariable.toQualifiedAccess(): FirQualifiedAccessExpression = buildQualifiedAccessExpression {
         calleeReference = buildResolvedNamedReference {
-            source = this@toQualifiedAccess.source
+            source = this@toQualifiedAccess.source?.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
             name = this@toQualifiedAccess.name
             resolvedSymbol = this@toQualifiedAccess.symbol
         }

@@ -255,7 +255,10 @@ fun generateAccessExpression(
     buildQualifiedAccessExpression {
         this.source = qualifiedSource
         calleeReference = buildSimpleNamedReference {
-            this.source = calleeReferenceSource
+            this.source = if (calleeReferenceSource == qualifiedSource)
+                calleeReferenceSource?.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
+            else
+                calleeReferenceSource
             this.name = name
         }
     }
