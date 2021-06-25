@@ -840,6 +840,18 @@ object LightTreePositioningStrategies {
         private fun lastSymbol(range: TextRange): TextRange =
             if (range.isEmpty) range else TextRange.create(range.endOffset - 1, range.endOffset)
     }
+
+    val LABEL: LightTreePositioningStrategy = object : LightTreePositioningStrategy() {
+        override fun mark(
+            node: LighterASTNode,
+            startOffset: Int,
+            endOffset: Int,
+            tree: FlyweightCapableTreeStructure<LighterASTNode>
+        ): List<TextRange> {
+            val nodeToMark = tree.findChildByType(node, KtNodeTypes.LABEL_QUALIFIER) ?: node
+            return markElement(nodeToMark, startOffset, endOffset, tree, node)
+        }
+    }
 }
 
 fun FirSourceElement.hasValOrVar(): Boolean =

@@ -79,7 +79,7 @@ enum class PositioningStrategy(private val strategy: String? = null) {
     DECLARATION_WITH_BODY,
     INCOMPATIBLE_DECLARATION,
     ACTUAL_DECLARATION_NAME,
-
+    LABEL,
     ;
 
     val expressionToCreate get() = "SourceElementPositioningStrategies.${strategy ?: name}"
