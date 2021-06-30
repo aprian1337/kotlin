@@ -329,6 +329,8 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     }
                 })
                 put(PROPERTY_LAZY_INITIALIZATION, arguments.propertyLazyInitialization)
+
+                arguments.externalDependencies?.let { put(EXTERNAL_DEPENDENCIES, it) }
             }
         }
     }

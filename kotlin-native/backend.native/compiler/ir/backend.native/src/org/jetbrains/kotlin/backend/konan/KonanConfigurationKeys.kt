@@ -164,6 +164,8 @@ class KonanConfigKeys {
         val RUNTIME_ASSERTS_MODE: CompilerConfigurationKey<RuntimeAssertsMode> = CompilerConfigurationKey.create("enable runtime asserts")
         val PROPERTY_LAZY_INITIALIZATION: CompilerConfigurationKey<Boolean>
                 = CompilerConfigurationKey.create("lazy top level properties initialization")
+        val EXTERNAL_DEPENDENCIES: CompilerConfigurationKey<String?> =
+                CompilerConfigurationKey.create("use external dependencies to enhance IR linker error messages")
     }
 }
 
