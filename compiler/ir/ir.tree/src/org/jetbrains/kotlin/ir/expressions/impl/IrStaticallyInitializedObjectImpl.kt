@@ -20,6 +20,15 @@ class IrStaticallyInitializedConstantImpl(
     override var value: IrConst<*>,
     override var isBoxed: Boolean = false
 ) : IrStaticallyInitializedConstant() {
+    override fun contentEquals(other: IrStaticallyInitializedValue) =
+        other is IrStaticallyInitializedConstantImpl &&
+                isBoxed == other.isBoxed &&
+                value.kind == other.value.kind &&
+                value.value == other.value
+
+    override fun contentHashCode() =
+        (isBoxed.hashCode() * 31 + value.kind.hashCode()) * 31 + value.value.hashCode()
+
     override var type = value.type
 
     override fun <D> acceptChildren(visitor: IrElementVisitor<Unit, D>, data: D) {
@@ -51,6 +60,22 @@ class IrStaticallyInitializedObjectImpl(
         fields[field] = value
     }
 
+    override fun contentEquals(other: IrStaticallyInitializedValue): Boolean =
+        other is IrStaticallyInitializedObjectImpl &&
+                other.type == type &&
+                isBoxed == other.isBoxed &&
+                fields.size == other.fields.size &&
+                fields.all { (field, value) -> other.fields[field]?.contentEquals(value) == true }
+
+    override fun contentHashCode(): Int {
+        var res = isBoxed.hashCode()
+        res = res * 31 + type.hashCode()
+        for ((field, value) in fields) {
+            res += field.hashCode() xor value.contentHashCode()
+        }
+        return res
+    }
+
     override fun <D> acceptChildren(visitor: IrElementVisitor<Unit, D>, data: D) {
         fields.forEach { (_, value) -> value.accept(visitor, data) }
     }
@@ -72,6 +97,22 @@ class IrStaticallyInitializedArrayImpl(
     override val elements = SmartList(initElements)
     override fun putElement(index: Int, value: IrStaticallyInitializedValue) {
         elements[index] = value
+    }
+
+    override fun contentEquals(other: IrStaticallyInitializedValue): Boolean =
+        other is IrStaticallyInitializedArrayImpl &&
+                other.type == type &&
+                isBoxed == other.isBoxed &&
+                elements.size == other.elements.size &&
+                elements.indices.all { elements[it].contentEquals(other.elements[it]) }
+
+    override fun contentHashCode(): Int {
+        var res = isBoxed.hashCode()
+        res = res * 31 + type.hashCode()
+        for (value in elements) {
+            res = res * 31 + value.contentHashCode()
+        }
+        return res
     }
 
     override fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D): R {
@@ -102,6 +143,31 @@ class IrStaticallyInitializedIntrinsicImpl(
     override var expression: IrExpression,
     override var isBoxed: Boolean = false
 ) : IrStaticallyInitializedIntrinsic() {
+    override fun contentEquals(other: IrStaticallyInitializedValue): Boolean {
+        if (other == this) return true
+        if (other !is IrStaticallyInitializedIntrinsicImpl) return false
+        val expr = expression
+        val otherExpr = other.expression
+        if (expr !is IrCall || otherExpr !is IrCall) return false
+        if (expr.valueArgumentsCount != 0 || otherExpr.valueArgumentsCount != 0) return false
+        if (expr.typeArgumentsCount != otherExpr.typeArgumentsCount) return false
+        return isBoxed == other.isBoxed &&
+                expr.symbol == otherExpr.symbol &&
+                (0 until expr.typeArgumentsCount).all { expr.getTypeArgument(it) == otherExpr.getTypeArgument(it) }
+    }
+
+    override fun contentHashCode(): Int {
+        val expr = expression
+        if (expr !is IrCall) return hashCode()
+        if (expr.valueArgumentsCount != 0) return hashCode()
+        var res = isBoxed.hashCode()
+        res = res * 31 + expr.symbol.hashCode()
+        for (i in 0 until expr.typeArgumentsCount) {
+            res = res * 31 + expr.getTypeArgument(i).hashCode()
+        }
+        return res
+    }
+
     override var type = expression.type
 
     override fun <D> acceptChildren(visitor: IrElementVisitor<Unit, D>, data: D) {
