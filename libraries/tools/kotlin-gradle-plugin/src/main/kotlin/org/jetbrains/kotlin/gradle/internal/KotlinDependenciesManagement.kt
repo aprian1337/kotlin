@@ -185,7 +185,7 @@ private fun chooseAndAddStdlibDependency(
     }
 
     val isStdlibAddedByUser = sourceSetDependencyConfigurations
-        .flatMap { it.allDependencies }
+        .flatMap { it.allExternalDependencies() }
         .any { dependency -> dependency.group == KOTLIN_MODULE_GROUP && dependency.name in stdlibModules }
 
     if (!isStdlibAddedByUser) {
@@ -201,7 +201,7 @@ private fun chooseAndAddStdlibDependency(
 
         // If the exact same module is added in the source sets hierarchy, possibly even with a different scope, we don't add it
         val moduleAddedInHierarchy = hierarchySourceSetsDependencyConfigurations.any {
-            it.allDependencies.any { dependency -> dependency.group == KOTLIN_MODULE_GROUP && dependency.name == stdlibModuleName }
+            it.allExternalDependencies().any { dependency -> dependency.group == KOTLIN_MODULE_GROUP && dependency.name == stdlibModuleName }
         }
 
         if (stdlibModuleName != null && !moduleAddedInHierarchy)
@@ -274,7 +274,7 @@ internal fun configureKotlinTestDependency(project: Project) {
             val configuration = project.sourceSetDependencyConfigurationByScope(kotlinSourceSet, scope)
             var finalizingDependencies = false
 
-            configuration.dependencies.matching(::isKotlinTestRootDependency).apply {
+            configuration.externalDependencies().matching(::isKotlinTestRootDependency).apply {
                 firstOrNull()?.let { versionOrNullBySourceSet[kotlinSourceSet] = it.version }
                 whenObjectRemoved {
                     if (!finalizingDependencies && !any())
@@ -400,3 +400,7 @@ private fun Project.tryWithDependenciesIfUnresolved(configuration: Configuration
         reportAlreadyResolved()
     }
 }
+
+private fun Configuration.allExternalDependencies() = allDependencies.withType(ExternalDependency::class.java)
+
+private fun Configuration.externalDependencies() = dependencies.withType(ExternalDependency::class.java)
