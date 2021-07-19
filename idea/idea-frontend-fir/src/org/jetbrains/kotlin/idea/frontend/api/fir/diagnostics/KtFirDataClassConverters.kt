@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeProjection
@@ -509,6 +510,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             firDiagnostic.c.map { coneKotlinType ->
                 firSymbolBuilder.typeBuilder.buildKtType(coneKotlinType)
             },
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.AMBIGUOUS_SUPER) { firDiagnostic ->
+        AmbiguousSuperImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
