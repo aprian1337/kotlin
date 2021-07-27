@@ -298,7 +298,7 @@ internal fun Path.enableCacheRedirector() {
                 it.appendText(
                     """
 
-                        apply from: "$cacheRedirectFile"
+                        apply(from: "$cacheRedirectFile")
 
                     """.trimIndent()
                 )
