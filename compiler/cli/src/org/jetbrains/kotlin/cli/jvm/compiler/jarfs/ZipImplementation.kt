@@ -97,11 +97,7 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
         position(currentOffset + 46)
         get(bytesForName)
 
-        val name =
-            if (bytesForName.all { it >= 0 })
-                String(bytesForName.asASCICharArray())
-            else
-                String(bytesForName, Charsets.UTF_8)
+        val name = bytesForName.asASCIString() ?: String(bytesForName, Charsets.UTF_8)
 
         currentOffset += 46 + fileNameLength + extraLength + fileCommentLength
 
@@ -125,5 +121,16 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
 }
 
 private fun ByteArray.asASCICharArray(): CharArray = CharArray(size) { this@asASCICharArray[it].toChar() }
+private fun ByteArray.asASCIString(): String? {
+    val charArray = CharArray(size)
+
+    for (i in 0 until size) {
+        val b = this[i]
+        if (b < 0) return null
+        charArray[i] = b.toChar()
+    }
+
+    return String(charArray)
+}
 
 private fun ByteBuffer.getUnsignedShort(offset: Int): Int = java.lang.Short.toUnsignedInt(getShort(offset))
