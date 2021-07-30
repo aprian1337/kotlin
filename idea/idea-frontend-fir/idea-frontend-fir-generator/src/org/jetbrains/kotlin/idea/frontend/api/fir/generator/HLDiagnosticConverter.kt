@@ -108,7 +108,7 @@ private object FirToKtConversionCreator {
         val nullable = type.isMarkedNullable
         val kClass = type.classifier as KClass<*>
         return tryMapAllowedType(kClass)
-            ?: tryMapPsiElementType(type, kClass)
+            ?: tryMapPsiElementType(kClass)
             ?: tryMapFirTypeToKtType(kClass, nullable)
             ?: tryMapPlatformType(type, kClass)
             ?: error("Unsupported type $type, consider add corresponding mapping")
@@ -164,7 +164,7 @@ private object FirToKtConversionCreator {
         return null
     }
 
-    private fun tryMapPsiElementType(type: KType, kClass: KClass<*>): HLParameterConversion? {
+    private fun tryMapPsiElementType(kClass: KClass<*>): HLParameterConversion? {
         if (kClass.isSubclassOf(PsiElement::class)) {
             return HLIdParameterConversion
         }

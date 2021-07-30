@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousObject
 import org.jetbrains.kotlin.fir.declarations.FirClass
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertiesScope
@@ -63,6 +62,7 @@ internal class KtFirScopeProvider(
         is KtFirAnonymousObjectSymbol -> firRef.withFir(FirResolvePhase.TYPES, body)
         is KtFirEnumEntrySymbol -> firRef.withFir(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
             val initializer = it.initializer
+            @Suppress("USELESS_IS_CHECK") // TODO: this seems like a bug in the code which should be fixed. FirAnonymousObject can't be a FirExpression.
             check(initializer is FirAnonymousObject)
             body(initializer)
         }
@@ -169,7 +169,7 @@ internal class KtFirScopeProvider(
             KtImplicitReceiver(
                 token,
                 builder.typeBuilder.buildKtType(receiver.type),
-                builder.buildSymbol(receiver.boundSymbol.fir as FirDeclaration),
+                builder.buildSymbol(receiver.boundSymbol.fir),
             )
         }
 
