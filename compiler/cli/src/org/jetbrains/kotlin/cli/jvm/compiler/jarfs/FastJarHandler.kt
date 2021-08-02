@@ -30,7 +30,7 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
             }
         }
 
-        myRoot = FastJarVirtualFile(this, "", -1, myParent = null, entryDescription = null)
+        myRoot = FastJarVirtualFile.create(this, "", -1, parent = null, entryDescription = null)
 
         val filesByRelativePath = HashMap<String, FastJarVirtualFile>(entries.size)
         filesByRelativePath[""] = myRoot
@@ -56,7 +56,7 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
             return parentFile
         }
 
-        return FastJarVirtualFile(
+        return FastJarVirtualFile.create(
             this, shortName,
             if (entry.isDirectory) -1 else entry.uncompressedSize,
             parentFile,
@@ -69,7 +69,7 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
             val (parentPath, shortName) = entryName.splitPath()
             val parentFile = getOrCreateDirectory(parentPath, directories)
 
-            FastJarVirtualFile(this, shortName, -1, parentFile, entryDescription = null)
+            FastJarVirtualFile.create(this, shortName, -1, parentFile, entryDescription = null)
         }
     }
 
