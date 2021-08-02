@@ -60,7 +60,11 @@ class CacheSupport(
         if (usePropertyLazyInitialization && hasCachedLibs)
             configuration.report(CompilerMessageSeverity.WARNING, "Cached libraries will not be used with experimental lazy top levels initialization")
 
-        val ignoreCachedLibraries = optimized || usePropertyLazyInitialization
+        val experimentalMM = configuration.get(KonanConfigKeys.MEMORY_MODEL)!! == MemoryModel.EXPERIMENTAL
+        if (experimentalMM && hasCachedLibs)
+            configuration.report(CompilerMessageSeverity.WARNING, "Cached libraries will not be used with experimental memory model")
+
+        val ignoreCachedLibraries = optimized || usePropertyLazyInitialization || experimentalMM
         CachedLibraries(
                 target = target,
                 allLibraries = allLibraries,
