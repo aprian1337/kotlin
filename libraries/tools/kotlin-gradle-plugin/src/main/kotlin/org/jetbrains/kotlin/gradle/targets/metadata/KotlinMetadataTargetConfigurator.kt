@@ -466,6 +466,7 @@ class KotlinMetadataTargetConfigurator :
         project.configurations.create(COMMON_MAIN_ELEMENTS_CONFIGURATION_NAME).apply {
             isCanBeConsumed = true
             isCanBeResolved = false
+            setupAsPublicConfigurationIfSupported(target)
             usesPlatformOf(target)
 
             attributes.attribute(
