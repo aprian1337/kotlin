@@ -1403,25 +1403,25 @@ standaloneTest("initializers_workers2") {
 standaloneTest("initializers_failInInitializer1") {
     source = "codegen/initializers/failInInitializer1.kt"
     goldValue = "caught\n"
-    flags = ['-Xir-property-lazy-initialization']
+    flags = ['-Xir-property-lazy-initialization=enable']
 }
 
 standaloneTest("initializers_failInInitializer2") {
     source = "codegen/initializers/failInInitializer2.kt"
     goldValue = "caught\ncaught2\n"
-    flags = ['-Xir-property-lazy-initialization']
+    flags = ['-Xir-property-lazy-initialization=enable']
 }
 
 standaloneTest("initializers_failInInitializer3") {
     source = "codegen/initializers/failInInitializer3.kt"
     goldValue = "caught\ncaught2\n"
-    flags = ['-Xir-property-lazy-initialization']
+    flags = ['-Xir-property-lazy-initialization=enable']
 }
 
 standaloneTest("initializers_failInInitializer4") {
     source = "codegen/initializers/failInInitializer4.kt"
     goldValue = "caught\ncaught2\n"
-    flags = ['-Xir-property-lazy-initialization']
+    flags = ['-Xir-property-lazy-initialization=enable']
 }
 
 standaloneTest("initializers_when1") {
