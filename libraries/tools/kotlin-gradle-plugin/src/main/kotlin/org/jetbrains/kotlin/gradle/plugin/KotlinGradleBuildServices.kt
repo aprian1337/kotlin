@@ -72,9 +72,8 @@ internal class KotlinGradleBuildServices private constructor(
             }
             val kotlinGradleEsListenerProvider = project.provider {
                 val listeners = ArrayList<ReportStatistics>()
-                val buildScan =
-                    project.rootProject.extensions.findByType(Class.forName("com.gradle.scan.plugin.BuildScanExtension")) as BuildScanExtension
-                buildScan?.also { listeners.add(ReportStatisticsToBuildScan(it)) }
+                val buildScan = project.rootProject.extensions.findByName("buildScan")
+                buildScan?.also { listeners.add(ReportStatisticsToBuildScan(it as BuildScanExtension)) }
                 listeners.add(ReportStatisticsToElasticSearch)
                 KotlinBuildEsStatListener(project.rootProject.name, listeners)
             }
