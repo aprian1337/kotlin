@@ -127,13 +127,14 @@ typedef struct {
   int end;
 } SymbolSourceInfoLimits;
 
-extern "C" int Kotlin_getSourceInfo(void* addr, SourceInfo *result_buffer, int result_size) {
+extern "C" int Kotlin_getSourceInfo_core_symbolication(void* addr, SourceInfo *result_buffer, int result_size) {
   if (result_size == 0) return 0;
-  __block SourceInfo inlinedTo = { .fileName = nullptr, .lineNumber = -1, .column = -1 };
-  __block SourceInfo inlinedFrom = { .fileName = nullptr, .lineNumber = -1, .column = -1 };
+  __block SourceInfo inlinedTo;
+  __block SourceInfo inlinedFrom;
   __block bool continueUpdateResult = true;
   __block bool hasInline = false;
   __block SymbolSourceInfoLimits limits = {.start = -1, .end = -1};
+  __block const char* inlinedFromFilename = nullptr;
 
   static bool csIsAvailable = TryInitializeCoreSymbolication();
 
@@ -170,7 +171,7 @@ extern "C" int Kotlin_getSourceInfo(void* addr, SourceInfo *result_buffer, int r
     });
 
     SYM_LOG("limits: {%s %d..%d}\n", limits.fileName, limits.start, limits.end);
-    inlinedTo.fileName = limits.fileName;
+    inlinedTo.setFilename(limits.fileName);
 
     CSSymbolForeachSourceInfo(symbol,
       ^(CSSourceInfoRef ref) {
@@ -189,7 +190,7 @@ extern "C" int Kotlin_getSourceInfo(void* addr, SourceInfo *result_buffer, int r
            * don't go deeper. at deeper level we check only that we at the right _inlined at_ position.
            */
           if (continueUpdateResult) {
-              inlinedFrom.fileName = fileName;
+              inlinedFromFilename = fileName;
               inlinedFrom.lineNumber = lineNumber;
               inlinedFrom.column = CSSourceInfoGetColumn(ref);
               if (strcmp(limits.fileName, fileName) == 0 && lineNumber >= limits.start && lineNumber <= limits.end) {
@@ -213,18 +214,12 @@ extern "C" int Kotlin_getSourceInfo(void* addr, SourceInfo *result_buffer, int r
   }
   SYM_LOG("}\n");
   if (hasInline && result_size > 1) {
-      result_buffer[0] = inlinedFrom;
-      result_buffer[1] = inlinedTo;
+      inlinedFrom.setFilename(inlinedFromFilename);
+      result_buffer[0] = std::move(inlinedFrom);
+      result_buffer[1] = std::move(inlinedTo);
       return 2;
   }
-  result_buffer[0] = inlinedTo;
+  result_buffer[0] = std::move(inlinedTo);
   return 1;
 }
-
-#else // KONAN_CORE_SYMBOLICATION
-
-extern "C" int Kotlin_getSourceInfo(void* addr, SourceInfo *result, int result_size) {
-    return 0;
-}
-
 #endif // KONAN_CORE_SYMBOLICATION
