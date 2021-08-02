@@ -12,13 +12,24 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-internal class FastJarVirtualFile(
+internal class FastJarVirtualFile private constructor(
     private val myHandler: FastJarHandler,
     private val myName: CharSequence,
     private val myLength: Int,
     private val myParent: FastJarVirtualFile?,
     private val entryDescription: ZipEntryDescription?,
 ) : VirtualFile() {
+
+    companion object {
+        fun create(
+            handler: FastJarHandler,
+            name: CharSequence,
+            length: Int,
+            parent: FastJarVirtualFile?,
+            entryDescription: ZipEntryDescription?,
+        ): FastJarVirtualFile =
+            FastJarVirtualFile(handler, ByteArrayCharSequence.convertToBytesIfPossible(name), length, parent, entryDescription)
+    }
 
     private var myChildrenArray = EMPTY_ARRAY
     private val myChildrenList: MutableList<VirtualFile> = mutableListOf()
