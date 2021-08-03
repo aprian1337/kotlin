@@ -44,7 +44,7 @@
 /* #undef HAVE_KERN_PROC_ARGS */
 
 /* Define if -llzma is available. */
-#define HAVE_LIBLZMA 1
+/* #undef HAVE_LIBLZMA 1 */
 
 /* Define to 1 if you have the <link.h> header file. */
 #if __has_include(<link.h>)
@@ -57,7 +57,9 @@
 /* #undef HAVE_LOADQUERY */
 
 /* Define to 1 if you have the `lstat' function. */
+#if __has_include(<sys/stat.h>)
 #define HAVE_LSTAT 1
+#endif
 
 /* Define to 1 if you have the <mach-o/dyld.h> header file. */
 #if __has_include(<mach-o/dyld.h>)
@@ -70,7 +72,9 @@
 #endif
 
 /* Define to 1 if you have the `readlink' function. */
+#ifndef KONAN_WINDOWS
 #define HAVE_READLINK 1
+#endif
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #if __has_include(<stdint.h>)
@@ -121,7 +125,7 @@
 #endif
 
 /* Define if -lz is available. */
-#define HAVE_ZLIB 1
+/* #undef HAVE_ZLIB */
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -176,7 +180,9 @@
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-/* #undef _FILE_OFFSET_BITS */
+#ifdef KONAN_WINDOWS
+#define _FILE_OFFSET_BITS 64
+#endif
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
