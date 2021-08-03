@@ -30,7 +30,7 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
             }
         }
 
-        myRoot = FastJarVirtualFile(this, "", -1, myParent = null, entryDescription = null)
+        myRoot = FastJarVirtualFile(this, "", -1, parent = null, entryDescription = null)
 
         val filesByRelativePath = HashMap<String, FastJarVirtualFile>(entries.size)
         filesByRelativePath[""] = myRoot
