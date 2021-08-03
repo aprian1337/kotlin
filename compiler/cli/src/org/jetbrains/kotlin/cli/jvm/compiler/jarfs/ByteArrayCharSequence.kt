@@ -5,7 +5,6 @@
 package org.jetbrains.kotlin.cli.jvm.compiler.jarfs
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.text.CharSequenceSubSequence
 import java.nio.charset.StandardCharsets
 import kotlin.experimental.and
 
@@ -14,7 +13,6 @@ class ByteArrayCharSequence @JvmOverloads constructor(
     private val myStart: Int = 0,
     private val myEnd: Int = myChars.size
 ) : CharSequence {
-
 
     override fun hashCode(): Int {
         error("Do not try computing hashCode ByteArrayCharSequence")
@@ -31,7 +29,7 @@ class ByteArrayCharSequence @JvmOverloads constructor(
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-        return if (startIndex == 0 && endIndex == length) this else CharSequenceSubSequence(this, startIndex, endIndex)
+        return if (startIndex == 0 && endIndex == length) this else ByteArrayCharSequence(myChars, myStart + startIndex, myStart + endIndex)
     }
 
     override fun toString(): String {

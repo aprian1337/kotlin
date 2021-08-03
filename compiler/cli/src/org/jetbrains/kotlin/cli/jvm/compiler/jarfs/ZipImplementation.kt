@@ -18,7 +18,6 @@ class ZipEntryDescription(
     val offsetInFile: Int,
     val compressionKind: CompressionKind,
     val fileNameSize: Int,
-    var originalBytesForAsci: ByteArray?,
 ) {
 
     enum class CompressionKind {
@@ -63,9 +62,11 @@ fun MappedByteBuffer.contentsToByteArray(
 fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
     order(ByteOrder.LITTLE_ENDIAN)
 
-    val endOfCentralDirectoryOffset = (capacity() - END_OF_CENTRAL_DIR_SIZE downTo 0).first { offset ->
+    var endOfCentralDirectoryOffset = capacity() - END_OF_CENTRAL_DIR_SIZE
+    while (endOfCentralDirectoryOffset >= 0) {
         // header of "End of central directory"
-        getInt(offset) == 0x06054b50
+        if (getInt(endOfCentralDirectoryOffset) == 0x06054b50) break
+        endOfCentralDirectoryOffset--
     }
 
     val entriesNumber = getUnsignedShort(endOfCentralDirectoryOffset + 10)
@@ -101,7 +102,7 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
         val isASCI = bytesForName.all { it >= 0 }
         val name =
             if (isASCI)
-                String(bytesForName.asASCICharArray())
+                ByteArrayCharSequence(bytesForName)
             else
                 String(bytesForName, Charsets.UTF_8)
 
@@ -119,7 +120,7 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
 
         result += ZipEntryDescription(
             name, compressedSize, uncompressedSize, offsetOfFileData, compressionKind,
-            fileNameLength, originalBytesForAsci = bytesForName.takeIf { isASCI }
+            fileNameLength
         )
     }
 
