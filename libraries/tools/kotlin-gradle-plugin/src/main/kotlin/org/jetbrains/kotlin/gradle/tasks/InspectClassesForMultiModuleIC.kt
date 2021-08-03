@@ -41,11 +41,7 @@ internal open class InspectClassesForMultiModuleIC : DefaultTask() {
     @get:Internal
     internal val fileTrees
         get() = sourceSetOutputClassesDir?.map {
-            if (isGradleVersionAtLeast(6, 0)) {
-                objects.fileTree().from(it).include("**/*.class")
-            } else {
-                project.fileTree(it).include("**/*.class")
-            }
+            project.fileTree(it).include("**/*.class")
         }
 
     @get:Internal

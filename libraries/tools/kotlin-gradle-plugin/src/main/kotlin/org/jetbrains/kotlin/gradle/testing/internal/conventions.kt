@@ -26,13 +26,8 @@ internal fun KotlinTest.configureConventions() {
     reports.configureConventions(project, name)
 
     fun binaryResultsDirDefault(): File = project.testResultsDir.resolve("$name/binary")
+    conventionMapping.map("binResultsDir", ::binaryResultsDirDefault)
 
-    if (isGradleVersionAtLeast(5, 5)) {
-        @Suppress("UnstableApiUsage")
-        binaryResultsDirectory.convention(project.layout.buildDirectory.dir(binaryResultsDirDefault().toRelativeString(project.buildDir)))
-    } else {
-        conventionMapping.map("binResultsDir", ::binaryResultsDirDefault)
-    }
 }
 
 internal fun TestTaskReports.configureConventions(project: Project, name: String) {
