@@ -12,12 +12,13 @@ import java.util.zip.Inflater
 
 
 class ZipEntryDescription(
-    val relativePath: String,
+    val relativePath: CharSequence,
     val compressedSize: Int,
     val uncompressedSize: Int,
     val offsetInFile: Int,
     val compressionKind: CompressionKind,
-    val fileNameSize: Int
+    val fileNameSize: Int,
+    var originalBytesForAsci: ByteArray?,
 ) {
 
     enum class CompressionKind {
@@ -97,8 +98,9 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
         position(currentOffset + 46)
         get(bytesForName)
 
+        val isASCI = bytesForName.all { it >= 0 }
         val name =
-            if (bytesForName.all { it >= 0 })
+            if (isASCI)
                 String(bytesForName.asASCICharArray())
             else
                 String(bytesForName, Charsets.UTF_8)
@@ -117,7 +119,7 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
 
         result += ZipEntryDescription(
             name, compressedSize, uncompressedSize, offsetOfFileData, compressionKind,
-            fileNameLength
+            fileNameLength, originalBytesForAsci = bytesForName.takeIf { isASCI }
         )
     }
 

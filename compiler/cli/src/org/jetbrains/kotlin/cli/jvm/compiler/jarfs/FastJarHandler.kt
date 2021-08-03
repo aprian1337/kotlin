@@ -64,8 +64,8 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
         )
     }
 
-    private fun getOrCreateDirectory(entryName: String, directories: MutableMap<String, FastJarVirtualFile>): FastJarVirtualFile {
-        return directories.getOrPut(entryName) {
+    private fun getOrCreateDirectory(entryName: CharSequence, directories: MutableMap<String, FastJarVirtualFile>): FastJarVirtualFile {
+        return directories.getOrPut(entryName.toString()) {
             val (parentPath, shortName) = entryName.splitPath()
             val parentFile = getOrCreateDirectory(parentPath, directories)
 
@@ -73,7 +73,7 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
         }
     }
 
-    private fun String.splitPath(): Pair<String, String> {
+    private fun CharSequence.splitPath(): Pair<CharSequence, CharSequence> {
         var slashIndex = this.length - 1
 
         while (slashIndex >= 0 && this[slashIndex] != '/') {
@@ -81,7 +81,7 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
         }
 
         if (slashIndex == -1) return Pair("", this)
-        return Pair(substring(0, slashIndex), substring(slashIndex + 1))
+        return Pair(subSequence(0, slashIndex), subSequence(slashIndex + 1, this.length))
     }
 
     fun findFileByPath(pathInJar: String): VirtualFile? {
