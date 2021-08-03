@@ -28,7 +28,7 @@ internal class FastJarVirtualFile private constructor(
             parent: FastJarVirtualFile?,
             entryDescription: ZipEntryDescription?,
         ): FastJarVirtualFile =
-            FastJarVirtualFile(handler, ByteArrayCharSequence.convertToBytesIfPossible(name), length, parent, entryDescription)
+            FastJarVirtualFile(handler, name, length, parent, entryDescription)
     }
 
     private var myChildrenArray = EMPTY_ARRAY
