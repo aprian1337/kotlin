@@ -1,4 +1,6 @@
-// IGNORE_BACKEND: JVM_IR
+// this hack is used to ensure that itarator will be resolved first
+@CompileTimeCalculation internal class IntProgressionIterator(first: Int, last: Int, val step: Int) : IntIterator()
+
 @CompileTimeCalculation
 fun loop(toInc: Int, start: Int, end: Int): Int {
     var result = toInc

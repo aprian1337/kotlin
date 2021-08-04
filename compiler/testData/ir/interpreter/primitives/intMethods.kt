@@ -1,3 +1,6 @@
+// this hack is used to ensure that itarator will be resolved first
+@CompileTimeCalculation internal class IntProgressionIterator(first: Int, last: Int, val step: Int) : IntIterator()
+
 @CompileTimeCalculation fun compareTo(value: Int, other: Byte) = value.compareTo(other)
 @CompileTimeCalculation fun compareTo(value: Int, other: Short) = value.compareTo(other)
 @CompileTimeCalculation fun compareTo(value: Int, other: Int) = value.compareTo(other)

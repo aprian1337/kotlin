@@ -1,3 +1,6 @@
+// this hack is used to ensure that itarator will be resolved first
+@CompileTimeCalculation internal class IntProgressionIterator(first: Int, last: Int, val step: Int) : IntIterator()
+
 const val range = (1..10).<!EVALUATED: `1`!>first<!>
 
 @CompileTimeCalculation
