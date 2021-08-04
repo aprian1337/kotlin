@@ -7,10 +7,9 @@ package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.api.Project
 import org.gradle.build.event.BuildEventsListenerRegistry
-import org.jetbrains.kotlin.gradle.utils.isConfigurationCacheAvailable
 import javax.inject.Inject
 
-open class BuildEventsListenerRegistryHolder @Inject constructor(val listenerRegistry: BuildEventsListenerRegistry?) {
+open class BuildEventsListenerRegistryHolder @Inject constructor(val listenerRegistry: BuildEventsListenerRegistry) {
     companion object {
         fun getInstance(project: Project) = run {
                 project.objects.newInstance(BuildEventsListenerRegistryHolder::class.java)
