@@ -23,12 +23,15 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrPropertyImpl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrStaticallyInitializedObjectImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrFieldSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrPropertySymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
 import org.jetbrains.kotlin.ir.transformStatement
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.getClass
+import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.*
 import org.jetbrains.kotlin.name.Name
@@ -159,8 +162,33 @@ private class AutoboxingTransformer(val context: Context) : AbstractValueUsageTr
             this
         } else {
             if (this is IrStaticallyInitializedValue) {
-                this.isBoxed = actualType.getInlinedClassNative() != null
-                return this
+                val isBoxing = actualType.getInlinedClassNative() != null
+                return when (this) {
+                    is IrStaticallyInitializedConstant -> {
+                        require(isBoxing) { "Can't unbox IrStaticallyInitializedConstant" }
+                        val clazz = this.type.getClass()!!
+                        val field = if (this.type.isPrimitiveType())
+                            getOrCreatePrimitiveBoxField(clazz).symbol
+                        else
+                            getInlineClassBackingField(clazz).symbol
+                        IrStaticallyInitializedObjectImpl(
+                                this.startOffset, this.endOffset,
+                                this.type,
+                                mapOf(field to this),
+                        ).apply {
+                            type = irBuiltIns.anyNType
+                        }
+                    }
+                    is IrStaticallyInitializedObject -> {
+                        if (isBoxing) {
+                            this.type = irBuiltIns.anyNType
+                        } else {
+                            this.type = this.representationType
+                        }
+                        this
+                    }
+                    else -> TODO("Boxing/unboxing of ${this::class.qualifiedName} is not supported")
+                }
             }
             val parameter = conversion.owner.explicitParameters.single()
             val argument = this.uncheckedCast(parameter.type)
@@ -229,7 +257,7 @@ private class InlineClassTransformer(private val context: Context) : IrBuildingT
         if (declaration.isInlined()) {
             if (declaration.isUsedAsBoxClass()) {
                 if (declaration.isNativePrimitiveType()) {
-                    buildBoxField(declaration)
+                    getOrCreatePrimitiveBoxField(declaration)
                 }
 
                 buildBoxFunction(declaration, context.getBoxFunction(declaration))
@@ -417,43 +445,6 @@ private class InlineClassTransformer(private val context: Context) : IrBuildingT
         builtBoxUnboxFunctions += function
     }
 
-    private fun buildBoxField(declaration: IrClass) {
-        val startOffset = declaration.startOffset
-        val endOffset = declaration.endOffset
-
-        val irField = IrFieldImpl(
-                startOffset,
-                endOffset,
-                IrDeclarationOrigin.DEFINED,
-                IrFieldSymbolImpl(),
-                Name.identifier("value"),
-                declaration.defaultType,
-                DescriptorVisibilities.PRIVATE,
-                isFinal = true,
-                isExternal = false,
-                isStatic = false,
-        )
-        irField.parent = declaration
-
-        val irProperty = IrPropertyImpl(
-                startOffset,
-                endOffset,
-                IrDeclarationOrigin.DEFINED,
-                IrPropertySymbolImpl(),
-                irField.name,
-                irField.visibility,
-                Modality.FINAL,
-                isVar = false,
-                isConst = false,
-                isLateinit = false,
-                isDelegated = false,
-                isExternal = false
-        )
-        irProperty.backingField = irField
-
-        declaration.addChild(irProperty)
-    }
-
     private fun IrBuilderWithScope.lowerConstructorCallToValue(
             expression: IrMemberAccessExpression<*>,
             callee: IrConstructor
@@ -584,4 +575,45 @@ private val Context.getLoweredInlineClassConstructor: (IrConstructor) -> IrSimpl
 
         valueParameters += irConstructor.valueParameters.map { it.copyTo(this, remapTypeMap = remapTypeMap) }
     }
+}
+
+private fun getOrCreatePrimitiveBoxField(declaration: IrClass) : IrField {
+    require(declaration.isNativePrimitiveType())
+    declaration.properties.singleOrNull()?.let { return it.backingField!! }
+    require(declaration.properties.none())
+    val startOffset = declaration.startOffset
+    val endOffset = declaration.endOffset
+
+    val irField = IrFieldImpl(
+            startOffset,
+            endOffset,
+            IrDeclarationOrigin.DEFINED,
+            IrFieldSymbolImpl(),
+            Name.identifier("value"),
+            declaration.defaultType,
+            DescriptorVisibilities.PRIVATE,
+            isFinal = true,
+            isExternal = false,
+            isStatic = false,
+    )
+    irField.parent = declaration
+
+    val irProperty = IrPropertyImpl(
+            startOffset,
+            endOffset,
+            IrDeclarationOrigin.DEFINED,
+            IrPropertySymbolImpl(),
+            irField.name,
+            irField.visibility,
+            Modality.FINAL,
+            isVar = false,
+            isConst = false,
+            isLateinit = false,
+            isDelegated = false,
+            isExternal = false
+    )
+    irProperty.backingField = irField
+
+    declaration.addChild(irProperty)
+    return irField
 }

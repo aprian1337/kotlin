@@ -5,11 +5,10 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
-import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
+import org.jetbrains.kotlin.ir.types.IrType
 
 abstract class IrStaticallyInitializedValue : IrExpression() {
-    abstract var isBoxed: Boolean
     abstract fun contentEquals(other: IrStaticallyInitializedValue) : Boolean
     abstract fun contentHashCode(): Int
 }
@@ -19,6 +18,7 @@ abstract class IrStaticallyInitializedConstant : IrStaticallyInitializedValue() 
 }
 
 abstract class IrStaticallyInitializedObject : IrStaticallyInitializedValue() {
+    abstract var representationType: IrType // it could be different from expression type, if wrapped in unchecked cast
     abstract val fields: Map<IrFieldSymbol, IrStaticallyInitializedValue>
     abstract fun putField(field: IrFieldSymbol, value: IrStaticallyInitializedValue)
 }

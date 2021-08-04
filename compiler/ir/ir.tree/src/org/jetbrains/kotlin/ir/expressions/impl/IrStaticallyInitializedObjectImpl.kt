@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.ir.expressions.impl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.transformInPlace
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
@@ -18,16 +17,14 @@ class IrStaticallyInitializedConstantImpl(
     override val startOffset: Int,
     override val endOffset: Int,
     override var value: IrConst<*>,
-    override var isBoxed: Boolean = false
 ) : IrStaticallyInitializedConstant() {
     override fun contentEquals(other: IrStaticallyInitializedValue) =
         other is IrStaticallyInitializedConstantImpl &&
-                isBoxed == other.isBoxed &&
                 value.kind == other.value.kind &&
                 value.value == other.value
 
     override fun contentHashCode() =
-        (isBoxed.hashCode() * 31 + value.kind.hashCode()) * 31 + value.value.hashCode()
+        value.kind.hashCode() * 31 + value.value.hashCode()
 
     override var type = value.type
 
@@ -47,10 +44,10 @@ class IrStaticallyInitializedConstantImpl(
 class IrStaticallyInitializedObjectImpl(
     override val startOffset: Int,
     override val endOffset: Int,
-    override var type: IrType,
+    override var representationType: IrType,
     fields_: Map<IrFieldSymbol, IrStaticallyInitializedValue>,
-    override var isBoxed: Boolean = false
 ) : IrStaticallyInitializedObject() {
+    override var type = representationType
     override val fields = fields_.toMutableMap()
     override fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D): R {
         return visitor.visitStaticallyInitializedObject(this, data)
@@ -63,13 +60,12 @@ class IrStaticallyInitializedObjectImpl(
     override fun contentEquals(other: IrStaticallyInitializedValue): Boolean =
         other is IrStaticallyInitializedObjectImpl &&
                 other.type == type &&
-                isBoxed == other.isBoxed &&
+                other.representationType == representationType &&
                 fields.size == other.fields.size &&
                 fields.all { (field, value) -> other.fields[field]?.contentEquals(value) == true }
 
     override fun contentHashCode(): Int {
-        var res = isBoxed.hashCode()
-        res = res * 31 + type.hashCode()
+        var res = type.hashCode() * 31 + representationType.hashCode()
         for ((field, value) in fields) {
             res += field.hashCode() xor value.contentHashCode()
         }
@@ -92,7 +88,6 @@ class IrStaticallyInitializedArrayImpl(
     override val endOffset: Int,
     override var type: IrType,
     initElements: List<IrStaticallyInitializedValue>,
-    override var isBoxed: Boolean = false
 ) : IrStaticallyInitializedArray() {
     override val elements = SmartList(initElements)
     override fun putElement(index: Int, value: IrStaticallyInitializedValue) {
@@ -102,13 +97,11 @@ class IrStaticallyInitializedArrayImpl(
     override fun contentEquals(other: IrStaticallyInitializedValue): Boolean =
         other is IrStaticallyInitializedArrayImpl &&
                 other.type == type &&
-                isBoxed == other.isBoxed &&
                 elements.size == other.elements.size &&
                 elements.indices.all { elements[it].contentEquals(other.elements[it]) }
 
     override fun contentHashCode(): Int {
-        var res = isBoxed.hashCode()
-        res = res * 31 + type.hashCode()
+        var res = type.hashCode()
         for (value in elements) {
             res = res * 31 + value.contentHashCode()
         }
@@ -141,7 +134,6 @@ class IrStaticallyInitializedIntrinsicImpl(
     override val startOffset: Int,
     override val endOffset: Int,
     override var expression: IrExpression,
-    override var isBoxed: Boolean = false
 ) : IrStaticallyInitializedIntrinsic() {
     override fun contentEquals(other: IrStaticallyInitializedValue): Boolean {
         if (other == this) return true
@@ -151,8 +143,7 @@ class IrStaticallyInitializedIntrinsicImpl(
         if (expr !is IrCall || otherExpr !is IrCall) return false
         if (expr.valueArgumentsCount != 0 || otherExpr.valueArgumentsCount != 0) return false
         if (expr.typeArgumentsCount != otherExpr.typeArgumentsCount) return false
-        return isBoxed == other.isBoxed &&
-                expr.symbol == otherExpr.symbol &&
+        return expr.symbol == otherExpr.symbol &&
                 (0 until expr.typeArgumentsCount).all { expr.getTypeArgument(it) == otherExpr.getTypeArgument(it) }
     }
 
@@ -160,8 +151,7 @@ class IrStaticallyInitializedIntrinsicImpl(
         val expr = expression
         if (expr !is IrCall) return hashCode()
         if (expr.valueArgumentsCount != 0) return hashCode()
-        var res = isBoxed.hashCode()
-        res = res * 31 + expr.symbol.hashCode()
+        var res = expr.symbol.hashCode()
         for (i in 0 until expr.typeArgumentsCount) {
             res = res * 31 + expr.getTypeArgument(i).hashCode()
         }

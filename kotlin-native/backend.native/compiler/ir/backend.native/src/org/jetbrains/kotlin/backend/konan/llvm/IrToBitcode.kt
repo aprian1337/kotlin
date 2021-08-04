@@ -1841,18 +1841,9 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         val symbols = context.ir.symbols
         return when (value) {
             is IrStaticallyInitializedConstant -> {
-                if (value.isBoxed) {
-                    require(value.value.kind != IrConstKind.String && value.value.kind != IrConstKind.Null)
-                    context.llvm.staticData.createConstKotlinObject(
-                            value.type.getClass()!!,
-                            evaluateConst(value.value)
-                    )
-                } else {
-                    evaluateConst(value.value)
-                }
+                evaluateConst(value.value)
             }
             is IrStaticallyInitializedArray -> {
-                require(!value.isBoxed) { "Statically initialized array can't be boxed" }
                 val clazz = value.type.getClass()!!
                 require(clazz.symbol == symbols.array || clazz.symbol in symbols.primitiveTypesToPrimitiveArrays.values) {
                     "Statically initialized array should have array type"
@@ -1863,17 +1854,21 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                 )
             }
             is IrStaticallyInitializedObject -> {
-                val clazz = value.type.getClass()!!
-                if (!value.isBoxed && clazz.isInline) {
-                    evaluateStaticInitialization(value.fields.values.single())
-                } else {
-                    context.llvm.staticData.createConstKotlinObject(
-                            clazz,
-                            *context.getLayoutBuilder(clazz).fields.map {
-                                evaluateStaticInitialization(value.fields[it.symbol]!!)
-                            }.also { require(it.size == value.fields.size) }.toTypedArray()
-                    )
+                val clazz = value.representationType.getClass()!!
+                if (value.representationType.getInlinedClassNative() != null && value.representationType == value.type) {
+                    val unboxed = value.fields.values.singleOrNull()
+                            ?: error("Inlined class should have exactly one field")
+                    return evaluateStaticInitialization(unboxed)
                 }
+                context.llvm.staticData.createConstKotlinObject(
+                        clazz,
+                        *context.getLayoutBuilder(clazz).fields.map {
+                            evaluateStaticInitialization(value.fields[it.symbol]
+                                    ?: error("Bad statically intialized object: field ${it.kotlinFqName} value not set"))
+                        }.also {
+                            require(it.size == value.fields.size) { "Bad statically intialized object: to many fields" }
+                        }.toTypedArray()
+                )
             }
             is IrStaticallyInitializedIntrinsic -> {
                 val expression = value.expression

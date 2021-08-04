@@ -731,7 +731,7 @@ class RenderIrElementVisitor(private val normalizeNames: Boolean = false, privat
         "STATIC_ARRAY type=${expression.type.render()}"
 
     override fun visitStaticallyInitializedObject(expression: IrStaticallyInitializedObject, data: Nothing?): String =
-        "STATIC_OBJECT type=${expression.type.render()}"
+        "STATIC_OBJECT type=${expression.type.render()} representationType=${expression.representationType.render()}"
 
     override fun visitStaticallyInitializedConstant(expression: IrStaticallyInitializedConstant, data: Nothing?): String =
         "STATIC_CONST type=${expression.type.render()}"
